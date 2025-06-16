@@ -17,7 +17,8 @@ import * as gs from '../../global.module.scss';
 import * as s from './List.module.scss';
 
 const List = React.memo(
-  ({ id, index, name, isPersisted, isCollapsed, cardIds, isFiltered, filteredCardIds, labelIds, memberIds, canEdit, createdAt, createdBy, updatedAt, updatedBy, onUpdate, onDelete, onCardCreate }) => {
+  // eslint-disable-next-line prettier/prettier
+  ({ id, index, name, isPersisted, isCollapsed, isPopedUp, cardIds, isFiltered, filteredCardIds, labelIds, memberIds, canEdit, createdAt, createdBy, updatedAt, updatedBy, onUpdate, onDelete, onCardCreate }) => {
     const [t] = useTranslation();
     const [isAddCardOpen, setIsAddCardOpen] = useState(false);
     const [nameEditHeight, setNameEditHeight] = useState(0);
@@ -37,6 +38,12 @@ const List = React.memo(
         headerNameDefaultHeight: parseInt(computedStyle.getPropertyValue('--headerNameDefaultHeight'), 10),
       };
     }, []);
+
+    const handleMouseEnterLeave = useCallback(() => {
+      onUpdate({
+        isPopedUp: !isPopedUp,
+      });
+    }, [isPopedUp, onUpdate]);
 
     const handleToggleCollapseClick = useCallback(() => {
       if (isPersisted && canEdit) {
@@ -97,10 +104,20 @@ const List = React.memo(
         const headerOffset = nameEditHeight || headerNameHeight;
         listWrapper.current.style.maxHeight = `calc(100vh - ${wrapperOffset}px - (${headerOffset}px - ${styleVars.headerNameDefaultHeight}px)`;
       }
-    }, [canEdit, nameEditHeight, headerNameHeight, isAddCardOpen, styleVars, isCollapsed]);
+    }, [canEdit, nameEditHeight, headerNameHeight, isAddCardOpen, styleVars, isCollapsed, isPopedUp]);
 
     const cardsCountText = () => {
       return isFiltered ? `${filteredCardIds.length} ${t('common.ofCards', { count: cardIds.length })}` : `${t('common.cards', { count: cardIds.length })}`;
+    };
+
+    const addCardButtonOnCollapsedList = () => {
+      return (
+        <div className="popup-menu">
+          <Button style={ButtonStyle.Icon} title={t('common.addCard')} onClick={handleAddCardClick} className={s.addCardButton}>
+            <Icon type={IconType.PlusMath} size={IconSize.Size13} className={s.addCardButtonIcon} />
+          </Button>
+        </div>
+      );
     };
 
     const cardsNode = (
@@ -150,6 +167,7 @@ const List = React.memo(
               {name}
             </div>
             <div className={s.headerCardsCountCollapsed}>{cardsCountText()}</div>
+            {isPopedUp && addCardButtonOnCollapsedList()}
           </div>
         )}
       </Droppable>
@@ -161,7 +179,7 @@ const List = React.memo(
           {({ innerRef, draggableProps, dragHandleProps }) => (
             // eslint-disable-next-line react/jsx-props-no-spreading
             <div {...draggableProps} data-drag-scroller ref={innerRef} className={s.innerWrapperCollapsed}>
-              <div className={s.outerWrapper}>
+              <div className={s.outerWrapper} onMouseEnter={handleMouseEnterLeave} onMouseLeave={handleMouseEnterLeave}>
                 <div
                   {...dragHandleProps} // eslint-disable-line react/jsx-props-no-spreading
                   className={s.headerCollapsed}
@@ -234,6 +252,7 @@ List.propTypes = {
   index: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
   isCollapsed: PropTypes.bool.isRequired,
+  isPopedUp: PropTypes.func.isRequired,
   isPersisted: PropTypes.bool.isRequired,
   cardIds: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
   isFiltered: PropTypes.bool.isRequired,

@@ -24,6 +24,9 @@ module.exports = {
     isCollapsed: {
       type: 'boolean',
     },
+    isPopedUp: {
+      type: 'boolean',
+    },
   },
 
   exits: {
